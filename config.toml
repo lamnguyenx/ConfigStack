@@ -1,0 +1,22 @@
+port = 8080
+host = "localhost"
+
+[database]
+url = "postgresql://localhost/mydb"
+port = 5432
+
+[database.max]
+connections = 100
+
+[cache]
+enabled = true
+ttl = 3600
+
+[cache.redis]
+host = "localhost"
+
+[api]
+timeout = 30
+
+[api.rate]
+limit = 100

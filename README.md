@@ -122,41 +122,55 @@ The final layer defines the configuration structure with default values.
 ### Python Implementation
 
 ```python
-class Config(pydantic.BaseModel):
-    port: int = PORT__DEFAULT
-    host: str = HOST__DEFAULT
+import pydantic as pdt
 
-    class Database(pydantic.BaseModel):
-        url: str = DATABASE__URL__DEFAULT
-        port: int = DATABASE__PORT__DEFAULT
+# Default constants (Layer 4)
+PORT_DEFAULT = 3000
+HOST_DEFAULT = 'localhost'
+DATABASE_URL_DEFAULT = 'postgresql://localhost/mydb'
+DATABASE_PORT_DEFAULT = 5432
+DATABASE_MAX_CONNECTIONS_DEFAULT = 100
+CACHE_ENABLED_DEFAULT = True
+CACHE_TTL_DEFAULT = 3600
+CACHE_REDIS_HOST_DEFAULT = 'localhost'
+API_TIMEOUT_DEFAULT = 30
+API_RATE_LIMIT_DEFAULT = 100
 
-        class Max(pydantic.BaseModel):
-            connections: int = DATABASE__MAX__CONNECTIONS__DEFAULT
+class Config(pdt.BaseModel):
+    port: int = PORT_DEFAULT
+    host: str = HOST_DEFAULT
 
-        max: Max = Max()
+    class Database(pdt.BaseModel):
+        url: str = DATABASE_URL_DEFAULT
+        port: int = DATABASE_PORT_DEFAULT
 
-    database: Database = Database()
+        class Max(pdt.BaseModel):
+            connections: int = DATABASE_MAX_CONNECTIONS_DEFAULT
 
-    class Cache(pydantic.BaseModel):
-        enabled: bool = CACHE__ENABLED__DEFAULT
-        ttl: int = CACHE__TTL__DEFAULT
+        max: Max = pdt.Field(default_factory=Max)
 
-        class Redis(pydantic.BaseModel):
-            host: str = CACHE__REDIS__HOST__DEFAULT
+    database: Database = pdt.Field(default_factory=Database)
 
-        redis: Redis = Redis()
+    class Cache(pdt.BaseModel):
+        enabled: bool = CACHE_ENABLED_DEFAULT
+        ttl: int = CACHE_TTL_DEFAULT
 
-    cache: Cache = Cache()
+        class Redis(pdt.BaseModel):
+            host: str = CACHE_REDIS_HOST_DEFAULT
 
-    class Api(pydantic.BaseModel):
-        timeout: int = API__TIMEOUT__DEFAULT
+        redis: Redis = pdt.Field(default_factory=Redis)
 
-        class Rate(pydantic.BaseModel):
-            limit: int = API__RATE__LIMIT__DEFAULT
+    cache: Cache = pdt.Field(default_factory=Cache)
 
-        rate: Rate = Rate()
+    class Api(pdt.BaseModel):
+        timeout: int = API_TIMEOUT_DEFAULT
 
-    api: Api = Api()
+        class Rate(pdt.BaseModel):
+            limit: int = API_RATE_LIMIT_DEFAULT
+
+        rate: Rate = pdt.Field(default_factory=Rate)
+
+    api: Api = pdt.Field(default_factory=Api)
 ```
 
 ### TypeScript Implementation

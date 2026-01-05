@@ -1,0 +1,3 @@
+[read_only_envs]
+skip_env_vars = ["HOME", "USER", "LANG", "PATH", "SHELL", "PWD", "TZ", "TERM"]
+skip_prefixes = ["LC_", "PYTHON"]

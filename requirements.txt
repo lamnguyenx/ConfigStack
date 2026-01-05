@@ -1,0 +1,4 @@
+pydantic
+deepmerge
+PyYAML
+colorama
