@@ -1,130 +1,54 @@
 # Multi-Layer Configuration Architecture
 
+> **Summary**: This document describes a multi-layer configuration system with priority order (lowest to highest): (1) Code defaults, (2) Configuration files, (3) Lowercase-dotted environment variables, (4) Uppercase-underscored environment variables, (5) CLI arguments.
+
+- [Multi-Layer Configuration Architecture](#multi-layer-configuration-architecture)
+  - [Configuration Priority](#configuration-priority)
+  - [Layer 1: Code Configuration Model (Lowest Priority)](#layer-1-code-configuration-model-lowest-priority)
+    - [Python Implementation](#python-implementation)
+    - [TypeScript Implementation](#typescript-implementation)
+  - [Layer 2: Configuration File](#layer-2-configuration-file)
+    - [Mapping Examples](#mapping-examples)
+    - [TOML Configuration File](#toml-configuration-file)
+  - [Layer 3: Lowercase-Dotted Environment Variables](#layer-3-lowercase-dotted-environment-variables)
+    - [Mapping Examples](#mapping-examples-1)
+  - [Layer 4: Uppercase-Underscored Environment Variables](#layer-4-uppercase-underscored-environment-variables)
+    - [Mapping Examples](#mapping-examples-2)
+  - [Layer 5: Command Line Arguments (Highest Priority)](#layer-5-command-line-arguments-highest-priority)
+    - [Mapping Examples](#mapping-examples-3)
+
 ## Configuration Priority
 
 The configuration system uses a **layered override approach** where each layer can override values from the previous layer:
 
-- **Layer 4 (Code Defaults)**: Provides baseline default values (lowest priority)
-- **Layer 3 (Config File)**: Overrides code defaults if specified
-- **Layer 2 (CLI Arguments)**: Overrides config file values if provided
-- **Layer 1 (Environment Variables)**: Overrides all other layers (highest priority)
+- **Layer 1 (Code Defaults)**: Provides baseline default values (lowest priority)
+- **Layer 2 (Config File)**: Overrides code defaults if specified
+- **Layer 3 (Lowercase-Dotted Environment Variables)**: Overrides config file values
+- **Layer 4 (Uppercase-Underscored Environment Variables)**: Overrides lowercase environment variables
+- **Layer 5 (CLI Arguments)**: Overrides all other layers (highest priority)
 
 **Example:**
 
-```
-Code Default:     port = 3000
-Config File:      port = 8080      → Result: 8080
-CLI Argument:     --port 9000      → Result: 9000
-Environment Var:  PORT=5000        → Result: 5000 (wins)
-```
+| Configuration Layer                                   | Setting             | Resolved Value          |
+| ----------------------------------------------------- | ------------------- | ----------------------- |
+| Code Default (Layer 1)                                | port = 3000         | 3000                    |
+| Configuration File (Layer 2)                          | port = 8080         | 8080                    |
+| Lowercase-Dotted Environment Variables (Layer 3)      | app_name.port=5000  | 5000                    |
+| Uppercase-Underscored Environment Variables (Layer 4) | APP_NAME__PORT=6000 | 6000                    |
+| CLI Arguments (Layer 5)                               | --port 9000         | 9000 (highest priority) |
 
 ---
 
-## Layer 1: Environment Variables (Highest Priority)
+## Layer 1: Code Configuration Model (Lowest Priority)
 
-Environment variables provide the highest priority configuration layer.
-
-**Mapping Rules:**
-
-- Convert to lowercase
-- Replace `__` with `.`
-
-**Python Implementation:**
-
-```python
-lambda x: x.lower().replace('__', '.')
-```
-
-### Mapping Examples
-
-| Environment Variable         | Internal Config Path                     |
-| ---------------------------- | ---------------------------------------- |
-| `PORT`                       | `Config_Object.port`                     |
-| `HOST`                       | `Config_Object.host`                     |
-| `DATABASE__URL`              | `Config_Object.database.url`             |
-| `DATABASE__PORT`             | `Config_Object.database.port`            |
-| `DATABASE__MAX__CONNECTIONS` | `Config_Object.database.max.connections` |
-| `CACHE__ENABLED`             | `Config_Object.cache.enabled`            |
-| `CACHE__TTL`                 | `Config_Object.cache.ttl`                |
-| `CACHE__REDIS__HOST`         | `Config_Object.cache.redis.host`         |
-| `API__RATE__LIMIT`           | `Config_Object.api.rate.limit`           |
-| `API__TIMEOUT`               | `Config_Object.api.timeout`              |
-
-## Layer 2: Command Line Arguments
-
-CLI arguments are overridden by environment variables and map directly to internal config paths using dot notation.
-
-### Mapping Examples
-
-| CLI Argument                 | Internal Config Path                     |
-| ---------------------------- | ---------------------------------------- |
-| `--port`                     | `Config_Object.port`                     |
-| `--host`                     | `Config_Object.host`                     |
-| `--database.url`             | `Config_Object.database.url`             |
-| `--database.port`            | `Config_Object.database.port`            |
-| `--database.max.connections` | `Config_Object.database.max.connections` |
-| `--cache.enabled`            | `Config_Object.cache.enabled`            |
-| `--cache.ttl`                | `Config_Object.cache.ttl`                |
-| `--cache.redis.host`         | `Config_Object.cache.redis.host`         |
-| `--api.rate.limit`           | `Config_Object.api.rate.limit`           |
-| `--api.timeout`              | `Config_Object.api.timeout`              |
-
-## Layer 3: Configuration File
-
-Configuration files (e.g., TOML) are overridden by CLI arguments and map directly to internal config paths using dot notation.
-
-### Mapping Examples
-
-| TOML Key                   | Internal Config Path                     |
-| -------------------------- | ---------------------------------------- |
-| `port`                     | `Config_Object.port`                     |
-| `host`                     | `Config_Object.host`                     |
-| `database.url`             | `Config_Object.database.url`             |
-| `database.port`            | `Config_Object.database.port`            |
-| `database.max.connections` | `Config_Object.database.max.connections` |
-| `cache.enabled`            | `Config_Object.cache.enabled`            |
-| `cache.ttl`                | `Config_Object.cache.ttl`                |
-| `cache.redis.host`         | `Config_Object.cache.redis.host`         |
-| `api.rate.limit`           | `Config_Object.api.rate.limit`           |
-| `api.timeout`              | `Config_Object.api.timeout`              |
-
-### TOML Configuration File
-
-```toml
-port = 8080
-host = "localhost"
-
-[database]
-url = "postgresql://localhost/mydb"
-port = 5432
-
-[database.max]
-connections = 100
-
-[cache]
-enabled = true
-ttl = 3600
-
-[cache.redis]
-host = "localhost"
-
-[api]
-timeout = 30
-
-[api.rate]
-limit = 100
-```
-
-## Layer 4: Code Configuration Model (Lowest Priority)
-
-The final layer defines the configuration structure with default values.
+The first layer defines the configuration structure with default values.
 
 ### Python Implementation
 
 ```python
 import pydantic as pdt
 
-# Default constants (Layer 4)
+# Default constants (Layer 1)
 PORT_DEFAULT = 3000
 HOST_DEFAULT = 'localhost'
 DATABASE_URL_DEFAULT = 'postgresql://localhost/mydb'
@@ -247,3 +171,126 @@ const defaultConfig: Config = {
   },
 };
 ```
+
+## Layer 2: Configuration File
+
+Configuration files (e.g., TOML) are overridden by environment variables and CLI arguments. They map directly to internal config paths using dot notation.
+
+### Mapping Examples
+
+| TOML Key                   | Internal Config Path                     |
+| -------------------------- | ---------------------------------------- |
+| `port`                     | `Config_Object.port`                     |
+| `host`                     | `Config_Object.host`                     |
+| `database.url`             | `Config_Object.database.url`             |
+| `database.port`            | `Config_Object.database.port`            |
+| `database.max.connections` | `Config_Object.database.max.connections` |
+| `cache.enabled`            | `Config_Object.cache.enabled`            |
+| `cache.ttl`                | `Config_Object.cache.ttl`                |
+| `cache.redis.host`         | `Config_Object.cache.redis.host`         |
+| `api.rate.limit`           | `Config_Object.api.rate.limit`           |
+| `api.timeout`              | `Config_Object.api.timeout`              |
+
+### TOML Configuration File
+
+```toml
+port = 8080
+host = "localhost"
+
+[database]
+url = "postgresql://localhost/mydb"
+port = 5432
+
+[database.max]
+connections = 100
+
+[cache]
+enabled = true
+ttl = 3600
+
+[cache.redis]
+host = "localhost"
+
+[api]
+timeout = 30
+
+[api.rate]
+limit = 100
+```
+
+## Layer 3: Lowercase-Dotted Environment Variables
+
+Lowercase-dotted environment variables provide a mid-priority configuration layer. All environment variables should be prefixed with `app_name.` where `app_name` is the lowercase name of your application. Since environment variable names containing dots require special handling, use the env command in shell scripts to set them.
+
+**Example:**
+
+```bash
+env app_name.database.url="postgresql://localhost:5432" node app.js
+```
+
+### Mapping Examples
+
+| Environment Variable                | Internal Config Path                     |
+| ----------------------------------- | ---------------------------------------- |
+| `app_name.port`                     | `Config_Object.port`                     |
+| `app_name.host`                     | `Config_Object.host`                     |
+| `app_name.database.url`             | `Config_Object.database.url`             |
+| `app_name.database.port`            | `Config_Object.database.port`            |
+| `app_name.database.max.connections` | `Config_Object.database.max.connections` |
+| `app_name.cache.enabled`            | `Config_Object.cache.enabled`            |
+| `app_name.cache.ttl`                | `Config_Object.cache.ttl`                |
+| `app_name.cache.redis.host`         | `Config_Object.cache.redis.host`         |
+| `app_name.api.rate.limit`           | `Config_Object.api.rate.limit`           |
+| `app_name.api.timeout`              | `Config_Object.api.timeout`              |
+
+## Layer 4: Uppercase-Underscored Environment Variables
+
+Uppercase-underscored environment variables provide a high-priority configuration layer, overridden only by CLI arguments. They use double underscores (__) to represent dot notation in the config path, prefixed with the uppercase app name.
+
+All environment variables should be prefixed with `APP_NAME__` where `APP_NAME` is the uppercase name of your application. Double underscores translate to dots in the internal config path.
+
+**Example:**
+
+```bash
+APP_NAME__DATABASE__URL="postgresql://localhost:5432" node app.js
+```
+
+### Mapping Examples
+
+| Environment Variable                   | Internal Config Path                     |
+| -------------------------------------- | ---------------------------------------- |
+| `APP_NAME__PORT`                       | `Config_Object.port`                     |
+| `APP_NAME__HOST`                       | `Config_Object.host`                     |
+| `APP_NAME__DATABASE__URL`              | `Config_Object.database.url`             |
+| `APP_NAME__DATABASE__PORT`             | `Config_Object.database.port`            |
+| `APP_NAME__DATABASE__MAX__CONNECTIONS` | `Config_Object.database.max.connections` |
+| `APP_NAME__CACHE__ENABLED`             | `Config_Object.cache.enabled`            |
+| `APP_NAME__CACHE__TTL`                 | `Config_Object.cache.ttl`                |
+| `APP_NAME__CACHE__REDIS__HOST`         | `Config_Object.cache.redis.host`         |
+| `APP_NAME__API__RATE__LIMIT`           | `Config_Object.api.rate.limit`           |
+| `APP_NAME__API__TIMEOUT`               | `Config_Object.api.timeout`              |
+
+## Layer 5: Command Line Arguments (Highest Priority)
+
+CLI arguments provide the highest-priority configuration layer and override all other configuration sources. They map directly to internal config paths using dot notation.
+
+**Example:**
+
+```bash
+node app.js --port 9000 --database.url "postgresql://localhost:5432"
+```
+
+### Mapping Examples
+
+| CLI Argument                 | Internal Config Path                     |
+| ---------------------------- | ---------------------------------------- |
+| `--port`                     | `Config_Object.port`                     |
+| `--host`                     | `Config_Object.host`                     |
+| `--database.url`             | `Config_Object.database.url`             |
+| `--database.port`            | `Config_Object.database.port`            |
+| `--database.max.connections` | `Config_Object.database.max.connections` |
+| `--cache.enabled`            | `Config_Object.cache.enabled`            |
+| `--cache.ttl`                | `Config_Object.cache.ttl`                |
+| `--cache.redis.host`         | `Config_Object.cache.redis.host`         |
+| `--api.rate.limit`           | `Config_Object.api.rate.limit`           |
+| `--api.timeout`              | `Config_Object.api.timeout`              |
