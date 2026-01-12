@@ -29,13 +29,13 @@ The configuration system uses a **layered override approach** where each layer c
 
 **Example:**
 
-| Configuration Layer                                   | Setting             | Resolved Value          |
-| ----------------------------------------------------- | ------------------- | ----------------------- |
-| Code Default (Layer 1)                                | port = 3000         | 3000                    |
-| Configuration File (Layer 2)                          | port = 8080         | 8080                    |
-| Lowercase-Dotted Environment Variables (Layer 3)      | app_name.port=5000  | 5000                    |
-| Uppercase-Underscored Environment Variables (Layer 4) | APP_NAME__PORT=6000 | 6000                    |
-| CLI Arguments (Layer 5)                               | --port 9000         | 9000 (highest priority) |
+| Configuration Layer                                   | Setting            | Resolved Value          |
+| ----------------------------------------------------- | ------------------ | ----------------------- |
+| Code Default (Layer 1)                                | port = 3000        | 3000                    |
+| Configuration File (Layer 2)                          | port = 8080        | 8080                    |
+| Lowercase-Dotted Environment Variables (Layer 3)      | app_name.port=5000 | 5000                    |
+| Uppercase-Underscored Environment Variables (Layer 4) | APP_NAME_PORT=6000 | 6000                    |
+| CLI Arguments (Layer 5)                               | --port 9000        | 9000 (highest priority) |
 
 ---
 
@@ -147,26 +147,26 @@ namespace Config {
 }
 
 const defaultConfig: Config = {
-  port: PORT__DEFAULT,
-  host: HOST__DEFAULT,
+  port: PORT_DEFAULT,
+  host: HOST_DEFAULT,
   database: {
-    url: DATABASE__URL__DEFAULT,
-    port: DATABASE__PORT__DEFAULT,
+    url: DATABASE_URL_DEFAULT,
+    port: DATABASE_PORT_DEFAULT,
     max: {
-      connections: DATABASE__MAX__CONNECTIONS__DEFAULT,
+      connections: DATABASE_MAX_CONNECTIONS_DEFAULT,
     },
   },
   cache: {
-    enabled: CACHE__ENABLED__DEFAULT,
-    ttl: CACHE__TTL__DEFAULT,
+    enabled: CACHE_ENABLED_DEFAULT,
+    ttl: CACHE_TTL_DEFAULT,
     redis: {
-      host: CACHE__REDIS__HOST__DEFAULT,
+      host: CACHE_REDIS_HOST_DEFAULT,
     },
   },
   api: {
-    timeout: API__TIMEOUT__DEFAULT,
+    timeout: API_TIMEOUT_DEFAULT,
     rate: {
-      limit: API__RATE__LIMIT__DEFAULT,
+      limit: API_RATE_LIMIT_DEFAULT,
     },
   },
 };
@@ -245,30 +245,30 @@ env app_name.database.url="postgresql://localhost:5432" node app.js
 
 ## Layer 4: Uppercase-Underscored Environment Variables
 
-Uppercase-underscored environment variables provide a high-priority configuration layer, overridden only by CLI arguments. They use double underscores (__) to represent dot notation in the config path, prefixed with the uppercase app name.
+Uppercase-underscored environment variables provide a high-priority configuration layer, overridden only by CLI arguments. They use single underscores (_) to represent dot notation in the config path, prefixed with the uppercase app name.
 
-All environment variables should be prefixed with `APP_NAME__` where `APP_NAME` is the uppercase name of your application. Double underscores translate to dots in the internal config path.
+All environment variables should be prefixed with `APP_NAME_` where `APP_NAME` is the uppercase name of your application. Single underscores translate to dots in the internal config path.
 
 **Example:**
 
 ```bash
-APP_NAME__DATABASE__URL="postgresql://localhost:5432" node app.js
+APP_NAME_DATABASE_URL="postgresql://localhost:5432" node app.js
 ```
 
 ### Mapping Examples
 
-| Environment Variable                   | Internal Config Path                     |
-| -------------------------------------- | ---------------------------------------- |
-| `APP_NAME__PORT`                       | `Config_Object.port`                     |
-| `APP_NAME__HOST`                       | `Config_Object.host`                     |
-| `APP_NAME__DATABASE__URL`              | `Config_Object.database.url`             |
-| `APP_NAME__DATABASE__PORT`             | `Config_Object.database.port`            |
-| `APP_NAME__DATABASE__MAX__CONNECTIONS` | `Config_Object.database.max.connections` |
-| `APP_NAME__CACHE__ENABLED`             | `Config_Object.cache.enabled`            |
-| `APP_NAME__CACHE__TTL`                 | `Config_Object.cache.ttl`                |
-| `APP_NAME__CACHE__REDIS__HOST`         | `Config_Object.cache.redis.host`         |
-| `APP_NAME__API__RATE__LIMIT`           | `Config_Object.api.rate.limit`           |
-| `APP_NAME__API__TIMEOUT`               | `Config_Object.api.timeout`              |
+| Environment Variable                | Internal Config Path                     |
+| ----------------------------------- | ---------------------------------------- |
+| `APP_NAME_PORT`                     | `Config_Object.port`                     |
+| `APP_NAME_HOST`                     | `Config_Object.host`                     |
+| `APP_NAME_DATABASE_URL`             | `Config_Object.database.url`             |
+| `APP_NAME_DATABASE_PORT`            | `Config_Object.database.port`            |
+| `APP_NAME_DATABASE_MAX_CONNECTIONS` | `Config_Object.database.max.connections` |
+| `APP_NAME_CACHE_ENABLED`            | `Config_Object.cache.enabled`            |
+| `APP_NAME_CACHE_TTL`                | `Config_Object.cache.ttl`                |
+| `APP_NAME_CACHE_REDIS_HOST`         | `Config_Object.cache.redis.host`         |
+| `APP_NAME_API_RATE_LIMIT`           | `Config_Object.api.rate.limit`           |
+| `APP_NAME_API_TIMEOUT`              | `Config_Object.api.timeout`              |
 
 ## Layer 5: Command Line Arguments (Highest Priority)
 
